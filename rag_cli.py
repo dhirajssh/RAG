@@ -13,3 +13,24 @@ def extract_text_from_pdf(path: str):
     if text:
       pages.append((i, text))
   return pages
+
+def chunk_words(text: str, chunk_size: int = 800, overlap: int=150)->list[str]:
+  words = text.split()
+  if not words:
+    return []
+  
+  if chunk_size<=0:
+    raise ValueError("chunk_size must be >0")
+  if overlap<0:
+    raise ValueError("overlap must be >= 0")
+  if overlap>=chunk_size:
+    raise ValueError("overlap must be < chunk_size")
+  
+  chunks = []
+  step = chunk_size - overlap
+
+  for start in range(0, len(words), step):
+    chunk = " ".join(words[start:start+chunk_size]).strip()
+    if chunk:
+      chunks.append(chunk)
+  return chunks
