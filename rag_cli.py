@@ -67,3 +67,51 @@ def embed_texts(texts: list[str], model: str = EMBED_MODEL)->list[list[float]]:
     input=texts,
   )
   return [item.embedding for item in response.data]
+
+def add_to_index(pdf_paths: list[str], chunk_size: int = 800, overlap: int = 150) -> int:
+  collection = get_collection()
+
+  existing = collection.get(include=[])
+  existing_ids = set(existing["ids"])
+
+  texts_to_add = []
+  ids_to_add = []
+  metadatas_to_add = []
+
+  for pdf_path in pdf_paths:
+    pages = extract_text_from_pdf(pdf_path)
+
+    for page_num, page_text in pages:
+      chunks = chunk_words(page_text, chunk_size=chunk_size, overlap=overlap)
+
+      for chunk_idx, chunk in enumerate(chunks, start=1):
+        doc_id = stable_id(
+          text=chunk,
+          source=pdf_path,
+          page=page_num,
+          chunk_index=chunk_idx,
+        )
+
+        if doc_id in existing_ids: continue
+
+        existing_ids.add(doc_id)
+        texts_to_add.append(chunk)
+        ids_to_add.append(doc_id)
+        metadatas_to_add.append(
+          {
+            "source": pdf_path,
+            "page": page_num,
+            "chunk": chunk_idx,
+          }
+        )
+  if not texts_to_add: return 0
+
+  embeddings = embed_texts(texts_to_add)
+
+  collection.add(
+    ids=ids_to_add,
+    documents=texts_to_add,
+    embeddings=embeddings,
+    metadatas=metadatas_to_add
+  )
+  return len(texts_to_add)
