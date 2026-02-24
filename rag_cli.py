@@ -1,6 +1,10 @@
 import hashlib
 from pypdf import PdfReader
 import io
+import chromadb
+
+PERSIST_DIR = "chroma"
+COLLECTION_NAME = "resume_rag"
 
 def extract_text_from_pdf(path: str):
   with open(path, "rb") as f:
@@ -43,3 +47,8 @@ def stable_id(text: str, source: str, page: int, chunk_index: int)->str:
   h.update(str(page).encode("utf-8"))
   h.update(str(chunk_index).encode("utf-8"))
   return h.hexdigest()
+
+def get_collection():
+  client = chromadb.PersistentClient(path=PERSIST_DIR)
+  collection = client.get_or_create_collection(COLLECTION_NAME)
+  return collection
