@@ -1,3 +1,4 @@
+import hashlib
 from pypdf import PdfReader
 import io
 
@@ -34,3 +35,11 @@ def chunk_words(text: str, chunk_size: int = 800, overlap: int=150)->list[str]:
     if chunk:
       chunks.append(chunk)
   return chunks
+
+def stable_id(text: str, source: str, page: int, chunk_index: int)->str:
+  h = hashlib.sha1()
+  h.update(text.encode("utf-8"))
+  h.update(source.encode("utf-8"))
+  h.update(str(page).encode("utf-8"))
+  h.update(str(chunk_index).encode("utf-8"))
+  return h.hexdigest()
