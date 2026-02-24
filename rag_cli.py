@@ -2,9 +2,13 @@ import hashlib
 from pypdf import PdfReader
 import io
 import chromadb
+from openai import OpenAI
+import os
 
 PERSIST_DIR = "chroma"
 COLLECTION_NAME = "resume_rag"
+EMBED_MODEL = "text-embedding-3-small"
+CHAT_MODEL = "gpt-4.1-mini"
 
 def extract_text_from_pdf(path: str):
   with open(path, "rb") as f:
@@ -52,3 +56,14 @@ def get_collection():
   client = chromadb.PersistentClient(path=PERSIST_DIR)
   collection = client.get_or_create_collection(COLLECTION_NAME)
   return collection
+
+def embed_texts(texts: list[str], model: str = EMBED_MODEL)->list[list[float]]:
+  api_key = os.getenv("OPENAI_API_KEY")
+  if not api_key:
+    raise ValueError("OPENAI_API_KEY is not set")
+  client = OpenAI(api_key=api_key)
+  response = client.embeddings.create(
+    model=model,
+    input=texts,
+  )
+  return [item.embedding for item in response.data]
