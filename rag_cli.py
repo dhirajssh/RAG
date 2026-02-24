@@ -131,3 +131,33 @@ def retrieve(query: str, top_k: int = 4):
   metadatas = results["metadata"][0]
   distances = results["distances"][0]
   return documents, metadatas, distances
+
+def build_prompt(question: str, documents: list[str], metadatas: list[dict])->str:
+  context_parts = []
+
+  for i, (doc, meta) in enumerate(zip(documents, metadatas), start=1):
+    source = meta.get("source", "unknown")
+    page = meta.get("page", "?")
+    chunk = meta.get("chunk", "?")
+
+    context_parts.append(
+      f"[{i}] source={source} page={page} chunk={chunk}\n{doc}"
+    )
+  
+  context_text = "\n\n".join(context_parts)
+  prompt = f"""
+  You are answering questions about the user's resume and experience.
+
+  Rules:
+  - Use only the provided context.
+  - If the answer is not in the context, say: "I don't know based on the provided documents."
+  - Cite sources using [number] notation that matches the context entries.
+
+  Question:
+  {question}
+
+  Context:
+  {context_text}
+  """.strip()
+
+  return prompt
