@@ -115,3 +115,19 @@ def add_to_index(pdf_paths: list[str], chunk_size: int = 800, overlap: int = 150
     metadatas=metadatas_to_add
   )
   return len(texts_to_add)
+
+def retrieve(query: str, top_k: int = 4):
+  collection = get_collection()
+
+  query_embedding = embed_texts([query])[0]
+
+  results = collection.query(
+    query_embeddings=[query_embedding],
+    n_results=top_k,
+    include=["documents", "metadatas", "distances"]
+  )
+
+  documents = results["documents"][0]
+  metadatas = results["metadata"][0]
+  distances = results["distances"][0]
+  return documents, metadatas, distances
